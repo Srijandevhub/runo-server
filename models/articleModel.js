@@ -4,6 +4,7 @@ const articleSchema = new mongoose.Schema({
     title: { type: String },
     shortdescription: { type: String },
     coverimage: { type: String },
+    thumbnail: { type: String },
     content: { type: String },
     categoryid: { type: mongoose.Schema.Types.ObjectId, ref: 'categories' },
     tagid: { type: mongoose.Schema.Types.ObjectId, ref: 'tags' },

@@ -27,6 +27,7 @@ const registerUser = async (req, res) => {
         const newUser = new User({
             username,
             email,
+            profileimage: gender === 'male' ? '/archieved/maleavatar.png' : "/archieved/femaleavatar.png",
             password: hashedPassword,
             gender
         });
