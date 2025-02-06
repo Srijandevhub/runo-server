@@ -64,6 +64,10 @@ const getArticles = async (req, res) => {
         }
         const catIds = cat !== 'all' ? cat.split(',') : [];
         const searchQuery = query ? { title: { $regex: query, $options: 'i' } } : {};
+        if (!limit) {
+            posts = await Article.find({ isarchieved: false, ...searchQuery }).sort({ createdAt: -1 });
+            totalPosts = await Article.countDocuments({ isarchieved: false, ...searchQuery });
+        }
         if (cat === 'all') {
             posts = await Article.find({ isarchieved: false, ...searchQuery }).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit));
             totalPosts = await Article.countDocuments({ isarchieved: false, ...searchQuery });
@@ -160,4 +164,144 @@ const tooglePublish = async (req, res) => {
     }
 }
 
-module.exports = { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish };
+const addArticleToBanner = async (req, res) => {
+    try {
+        const { articleid } = req.body;
+        const selectedArticle = await Article.findById(articleid);
+        if (selectedArticle.showbanner) {
+            res.status(400).json({ message: "Article Already added to banner" });
+        }
+        await Article.findByIdAndUpdate(articleid, {
+            showbanner: true
+        });
+        res.status(200).json({ message: "Article modified" });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+const removeArticleToBanner = async (req, res) => {
+    try {
+        const { articleid } = req.body;
+        const selectedArticle = await Article.findById(articleid);
+        if (!selectedArticle.showbanner) {
+            res.status(400).json({ message: "Article is not added to banner" });
+        }
+        await Article.findByIdAndUpdate(articleid, {
+            showbanner: false
+        });
+        res.status(200).json({ message: "Article modified" });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const addArticleToFeatured = async (req, res) => {
+    try {
+        const { articleid } = req.body;
+        const featured = await Article.find({ featured: true });
+        if (featured._id.toString() === articleid) {
+            res.status(400).json({ message: "Article Already added to featured" });
+        }
+        if (featured.length == 1) {
+            res.status(400).json({ message: "Already there is one featured article" });
+        }
+        await Article.findByIdAndUpdate(articleid, {
+            featured: true
+        });
+        res.status(200).json({ message: "Article modified" });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const removeFeaturedArticle = async (req, res) => {
+    try {
+        const { articleid } = req.body;
+        await Article.findByIdAndUpdate(articleid, {
+            featured: false
+        });
+        res.status(200).json({ message: "Article modified" });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const getBannerArticles = async (req, res) => {
+    try {
+        const articles = await Article.find({ showbanner: true });
+        const categoryids = articles.map(item => item.categoryid);
+        const categories = await Category.find({ _id: { $in: categoryids } });
+        const updatedArticles = articles.map((item) => {
+            const category = categories.find(cat => cat._id.toString() === item.categoryid.toString());
+            return {
+                categorytitle: category.title,
+                coverimage: item.coverimage,
+                title: item.title,
+                createdAt: item.createdAt,
+                shortdescription: item.shortdescription,
+                _id: item._id
+            }
+        })
+        res.status(200).json({ message: "Articles fetched", articles: updatedArticles });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const getFeatured = async (req, res) => {
+    try {
+        const article = await Article.findOne({ featured: true }).sort({ createdAt: -1 });
+        const category = await Category.findById(article.categoryid);
+        const finalArticle = {
+            _id: article._id,
+            title: article.title,
+            coverimage: article.coverimage,
+            shortdescription: article.shortdescription,
+            createdAt: article.createdAt,
+            categorytitle: category.title
+        };
+        res.status(200).json({ message: "Article fetched", article: finalArticle });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const getEditorsPick = async (req, res) => {
+    try {
+        const articles = await Article.find({ editorpick: true });
+        const categoryids = articles.map(item =>item.categoryid);
+        const categories = await Category.find({ _id: { $in: categoryids } });
+        const finalArticles = articles.map((item) => {
+            const category = categories.find(cat => cat._id.toString() === item.categoryid.toString());
+            return {
+                _id: item._id,
+                coverimage: item.coverimage,
+                categorytitle: category.title,
+                title: item.title,
+                shortdescription: item.shortdescription,
+                createdAt: item.createdAt
+            }
+        })
+        res.status(200).json({ message: "Article fetched", articles: finalArticles });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+const getRelatedPosts = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const article = await Article.findById(id);
+        const relatedArticles = await Article.find({ categoryid: article.categoryid, _id: { $ne: id } }).sort({ createdAt: -1 }).limit(5);
+        const category = await Category.findById(article.categoryid);
+        const modifiedArticles = relatedArticles.map((item) => {
+            const articleObj = item.toObject();
+            return { ...articleObj, categorytitle: category?.title };
+        });
+        res.status(200).json({ message: "Articles fetched", articles: modifiedArticles });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+module.exports = { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish, addArticleToBanner, removeArticleToBanner, addArticleToFeatured, removeFeaturedArticle, getBannerArticles, getFeatured, getEditorsPick, getRelatedPosts };

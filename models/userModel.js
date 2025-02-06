@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     shortdescription: { type: String, default: "" },
     gender: { type: String, enum: ["male", 'female'] },
     posts: [ { type: mongoose.Schema.Types.ObjectId, ref: 'articles' } ],
-    role: { type: String, enum: ['admin', 'user'], default: "user" }
+    role: { type: String, enum: ['superadmin', 'admin', 'user'], default: "user" }
 }, { timestamps: true });
 
 const User = mongoose.model("users", userSchema);
