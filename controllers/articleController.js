@@ -228,7 +228,7 @@ const removeFeaturedArticle = async (req, res) => {
 
 const getBannerArticles = async (req, res) => {
     try {
-        const articles = await Article.find({ showbanner: true });
+        const articles = await Article.find({ showbanner: true, isarchieved: false });
         const categoryids = articles.map(item => item.categoryid);
         const categories = await Category.find({ _id: { $in: categoryids } });
         const updatedArticles = articles.map((item) => {
@@ -250,7 +250,7 @@ const getBannerArticles = async (req, res) => {
 
 const getFeatured = async (req, res) => {
     try {
-        const article = await Article.findOne({ featured: true }).sort({ createdAt: -1 });
+        const article = await Article.findOne({ featured: true, isarchieved: false }).sort({ createdAt: -1 });
         const category = await Category.findById(article.categoryid);
         const finalArticle = {
             _id: article._id,
@@ -268,7 +268,7 @@ const getFeatured = async (req, res) => {
 
 const getEditorsPick = async (req, res) => {
     try {
-        const articles = await Article.find({ editorpick: true });
+        const articles = await Article.find({ editorpick: true, isarchieved: false });
         const categoryids = articles.map(item =>item.categoryid);
         const categories = await Category.find({ _id: { $in: categoryids } });
         const finalArticles = articles.map((item) => {
@@ -292,7 +292,7 @@ const getRelatedPosts = async (req, res) => {
     try {
         const { id } = req.params;
         const article = await Article.findById(id);
-        const relatedArticles = await Article.find({ categoryid: article.categoryid, _id: { $ne: id } }).sort({ createdAt: -1 }).limit(5);
+        const relatedArticles = await Article.find({ categoryid: article.categoryid, _id: { $ne: id }, isarchieved: false }).sort({ createdAt: -1 }).limit(5);
         const category = await Category.findById(article.categoryid);
         const modifiedArticles = relatedArticles.map((item) => {
             const articleObj = item.toObject();
