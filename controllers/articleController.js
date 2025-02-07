@@ -2,6 +2,7 @@ const Article = require('../models/articleModel');
 const User = require('../models/userModel');
 const Category = require("../models/categoryModel");
 const Tag = require('../models/tagModel');
+const Comment = require('../models/commentsModel');
 const path = require('path');
 const addArticle = async (req, res) => {
     try {
@@ -36,10 +37,24 @@ const getArticle = async (req, res) => {
     try {
         const { id } = req.params;
         const article = await Article.findById(id);
+        const comments = await Comment.find({ articleid: id });
+        const commentuserids = comments.map(item => item.userid);
+        const commentusers = await User.find({ _id: { $in: commentuserids } });
+        const finalComments = comments.map((item) => {
+            const user = commentusers.find(user => user._id.toString() === item.userid.toString());
+            return {
+                _id: item._id,
+                comment: item.comment,
+                userid: user._id,
+                username: (user.firstname || user.lastname) ? user.firstname + " " + user.lastname : user.username,
+                profileimage: user.profileimage,
+                createdAt: item.createdAt
+            }
+        });
         const user = await User.findById(article.userid);
         const category = await Category.findById(article.categoryid);
         const tag = await Tag.findById(article.tagid);
-        res.status(200).json({ message: "Fetched article", article: article, user: user, category: category, tag: tag });
+        res.status(200).json({ message: "Fetched article", article: article, user: user, category: category, tag: tag, comments: finalComments });
     } catch (error) {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
@@ -47,9 +62,22 @@ const getArticle = async (req, res) => {
 
 const getArticlesAuth = async (req, res) => {
     try {
+        const { limit = 4, skip = 0 } = req.query;
         const userid = req.user.userid;
-        const articles = await Article.find({ userid: userid });
-        res.status(200).json({ message: "Articles fetched", articles: articles });
+        const totalArticles = await Article.countDocuments({ userid: userid });
+        const articles = await Article.find({ userid: userid }).skip(Number(skip)).limit(Number(limit));
+        const totalPages = Math.ceil(totalArticles / limit);
+        const currentPage = Math.floor(skip / limit) + 1;
+        const previousPage = currentPage > 1 ? currentPage - 1 : null;
+        const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+        res.status(200).json({ message: "Articles fetched", articles: articles, 
+            pagination: {
+                totalPages,
+                currentPage,
+                previousPage,
+                nextPage
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }

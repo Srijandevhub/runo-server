@@ -20,6 +20,7 @@ app.use("/api/v1/public", require('./routes/guestRoutes'));
 app.use("/api/v1/category", require("./routes/categoryRoutes"));
 app.use("/api/v1/tag", require("./routes/tagRoute"));
 app.use("/api/v1/article", require("./routes/articleRoutes"));
+app.use("/api/v1/comment", require('./routes/commentRoutes'));
 
 app.listen(port, () => {
     console.log(`Server started at ${port}`);

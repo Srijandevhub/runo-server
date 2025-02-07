@@ -7,12 +7,12 @@ const userAuth = (req, res, next) => {
     const userToken = req.cookies.runousertoken;
     const refreshToken = req.cookies.runorefreshtoken;
     if (!userToken && !refreshToken) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Access denied 1" });
     }
     if (userToken) {
         jwt.verify(userToken, user_secret, (err, user) => {
             if (err) {
-                return res.status(403).json({ message: "Access denied" });
+                return res.status(403).json({ message: "Access denied 2" });
             }
             req.user = user;
             next();
@@ -21,7 +21,7 @@ const userAuth = (req, res, next) => {
         if (refreshToken) {
             jwt.verify(refreshToken, refresh_secret, (err, user) => {
                 if (err) {
-                    return res.status(403).json({ message: "Access denied" });
+                    return res.status(403).json({ message: "Access denied 3" });
                 }
                 const token = jwt.sign({ userid: user.userid, role: user.role }, process.env.TOKEN_SECRET, { expiresIn: '1d' });
                 res.cookie("runousertoken", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
