@@ -120,7 +120,8 @@ const getArticles = async (req, res) => {
                 authorimage: user.profileimage,
                 author: (user.firstname && user.lastname) ? user.firstname + " " + user.lastname : user.username,
                 authordes: user.shortdescription,
-                categorytitle: category.title
+                categorytitle: category.title,
+                coverimage: post.coverimage
             }
         })
         const totalPages = Math.ceil(totalPosts / limit);
@@ -332,4 +333,27 @@ const getRelatedPosts = async (req, res) => {
     }
 }
 
-module.exports = { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish, addArticleToBanner, removeArticleToBanner, addArticleToFeatured, removeFeaturedArticle, getBannerArticles, getFeatured, getEditorsPick, getRelatedPosts };
+const getAdminArticles = async (req, res) => {
+    try {
+        const { limit = 10, skip = 0, query = "" } = req.query;
+        const searchQuery = query ? { title: { $regex: query, $options: 'i' } } : {};
+        const articles = await Article.find({ ...searchQuery }).skip(Number(skip)).limit(Number(limit));
+        const articlesTotal = await Article.countDocuments({ ...searchQuery });
+        const totalPages = Math.ceil(articlesTotal / limit);
+        const currentPage = Math.floor(skip / limit) + 1;
+        const previousPage = currentPage > 1 ? currentPage - 1 : null;
+        const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+        res.status(200).json({ message: "Articles Fetched", articles: articles, 
+            pagination: {
+                totalPages,
+                currentPage,
+                previousPage,
+                nextPage
+            }
+         });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+module.exports = { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish, addArticleToBanner, removeArticleToBanner, addArticleToFeatured, removeFeaturedArticle, getBannerArticles, getFeatured, getEditorsPick, getRelatedPosts, getAdminArticles };

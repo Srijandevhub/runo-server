@@ -1,6 +1,6 @@
 const express = require('express');
 const { userAuth, articleAuth, articleAuth2, adminAuth } = require('../middlewares/auth');
-const { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish, addArticleToBanner, removeArticleToBanner, addArticleToFeatured, removeFeaturedArticle, getBannerArticles, getFeatured, getEditorsPick, getRelatedPosts } = require('../controllers/articleController');
+const { addArticle, getArticle, getArticlesAuth, getArticles, updateArticle, deleteArticle, tooglePublish, addArticleToBanner, removeArticleToBanner, addArticleToFeatured, removeFeaturedArticle, getBannerArticles, getFeatured, getEditorsPick, getRelatedPosts, getAdminArticles } = require('../controllers/articleController');
 const { articleImagesUpload } = require('../middlewares/upload');
 const router = express.Router();
 
@@ -20,5 +20,6 @@ router.get("/banner", getBannerArticles);
 router.get("/featured", getFeatured);
 router.get("/editorspick", getEditorsPick);
 router.get("/related-articles/:id", getRelatedPosts);
+router.get("/get-admin-articles", adminAuth, getAdminArticles);
 
 module.exports = router;
