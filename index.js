@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const databaseConfig = require('./config/databaseConfig');
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: ["http://localhost:5174", "http://localhost:5173"], methods: ["POST", "GET", "PUT", "DELETE"], credentials: true }));
+app.use(cors({ origin: ["http://localhost:5174", "http://localhost:5173", "https://runo-client.vercel.app"], methods: ["POST", "GET", "PUT", "DELETE"], credentials: true }));
 app.use(cookieParser({ origin: ["http://localhost:5174", "http://localhost:5173"] }));
 const port = process.env.PORT;
 const url = process.env.MONGO_URL;
